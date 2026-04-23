@@ -23,42 +23,29 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            // ❌ Disable CSRF (for APIs)
             .csrf(csrf -> csrf.disable())
 
-            // ✅ No session (JWT based)
+            // 🔥 VERY IMPORTANT
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ❌ Disable default login popup
-            .httpBasic(httpBasic -> httpBasic.disable())
+            // 🔥 DISABLE DEFAULT SPRING SECURITY
+            .httpBasic(http -> http.disable())
             .formLogin(form -> form.disable())
 
-            // 🔐 Authorization rules
             .authorizeHttpRequests(auth -> auth
-
-                // ✅ PUBLIC
                 .requestMatchers("/api/auth/**").permitAll()
-
-                // 🔐 ADMIN ONLY
                 .requestMatchers("/api/bookings/admin").hasRole("ADMIN")
-
-                // ✅ OTHER PUBLIC APIs
                 .requestMatchers(
                     "/api/bookings/**",
                     "/api/rooms/**",
                     "/api/payment/**"
                 ).permitAll()
-
-                // 🔒 everything else
                 .anyRequest().authenticated()
             )
 
-            // ✅ JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
