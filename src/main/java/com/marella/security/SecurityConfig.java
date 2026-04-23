@@ -26,14 +26,13 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
 
-            // 🔥 VERY IMPORTANT
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // 🔥 DISABLE DEFAULT SPRING SECURITY
-            .httpBasic(http -> http.disable())
-            .formLogin(form -> form.disable())
+            // ✅ FIXED HERE
+            .httpBasic(h -> h.disable())
+            .formLogin(f -> f.disable())
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
