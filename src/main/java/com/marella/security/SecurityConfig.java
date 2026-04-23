@@ -22,32 +22,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http
-        	.cors(cors -> {}) 
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
+    	http
+        .cors(cors -> {})
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth
 
-                // ✅ PUBLIC APIs
-                .requestMatchers(
-                    "/api/bookings",
-                    "/api/bookings/occupied-rooms",
-                    "/api/rooms",
-                    "/api/payment/**",
-                    "/api/auth/**"   // 🔥 ADD THIS LINE
-                ).permitAll()
+            // ✅ PUBLIC
+            .requestMatchers("/api/auth/**").permitAll()
 
-                // 🔐 ADMIN ONLY
-                .requestMatchers(
-                    "/api/bookings/admin",
-                    "/api/bookings/*",
-                    "/api/bookings/checkout/*"
-                ).hasRole("ADMIN")
+            // 🔐 ADMIN ONLY
+            .requestMatchers("/api/bookings/admin").hasRole("ADMIN")
 
-                // everything else
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            // ✅ OTHER PUBLIC APIs
+            .requestMatchers(
+                "/api/bookings/**",
+                "/api/rooms/**",
+                "/api/payment/**"
+            ).permitAll()
 
+            // everything else
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+    	
         return http.build();
     }
     @Bean
