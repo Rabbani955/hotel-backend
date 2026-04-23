@@ -29,11 +29,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // ✅ 1. SKIP AUTH APIs (LOGIN, REGISTER, VALIDATE)
-        if (path.startsWith("/api/auth") ||
-        	    path.startsWith("/api/bookings") ||
-        	    path.startsWith("/api/rooms") ||
-        	    path.startsWith("/api/payment")) {
+        // ✅ ONLY skip authentication APIs
+        if (path.startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -41,35 +38,39 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             String authHeader = request.getHeader("Authorization");
 
-            // ✅ 2. CHECK TOKEN EXISTS
+            // ✅ Check if Authorization header exists
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
                 String token = authHeader.substring(7);
 
-                // ✅ 3. VALIDATE TOKEN
+                // ✅ Validate token
                 if (jwtUtil.isTokenValid(token)) {
 
+                    String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
 
+                    // ✅ Set authentication with ROLE_
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
-                                    "admin",
+                                    username,
                                     null,
                                     Collections.singleton(() -> "ROLE_" + role)
                             );
 
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    auth.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
 
+                    // ✅ Store in Security Context
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
 
         } catch (Exception e) {
-            // ❗ DO NOT BLOCK REQUEST — just log
             System.out.println("JWT Error: " + e.getMessage());
         }
 
-        // ✅ 4. CONTINUE FILTER CHAIN ALWAYS
+        // ✅ Continue filter chain
         filterChain.doFilter(request, response);
     }
 }
