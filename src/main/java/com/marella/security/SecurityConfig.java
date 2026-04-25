@@ -40,7 +40,7 @@ public class SecurityConfig {
             .formLogin(f -> f.disable())
 
             // ✅ Authorization rules
-            .authorizeHttpRequests(auth -> auth
+            /*.authorizeHttpRequests(auth -> auth
 
                 // 🔥 VERY IMPORTANT (Fix preflight issue)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -59,7 +59,26 @@ public class SecurityConfig {
 
                 // Everything else secured
                 .anyRequest().authenticated()
-            )
+            ) */
+            
+            .authorizeHttpRequests(auth -> auth
+
+            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+            	    // PUBLIC
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
+            	    .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
+            	    .requestMatchers(HttpMethod.GET, "/api/bookings/occupied-rooms").permitAll()
+
+            	    // ADMIN
+            	    .requestMatchers("/api/bookings/admin").hasRole("ADMIN")
+            	    .requestMatchers(HttpMethod.PUT, "/api/bookings/checkout/**").hasRole("ADMIN")
+            	    .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").hasRole("ADMIN")
+            	    .requestMatchers("/api/rooms/admin/**").hasRole("ADMIN")
+
+            	    .anyRequest().authenticated()
+            	)
 
             // ✅ JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -82,7 +101,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "https://*.onrender.com"   // for deployment
+            "https://hotel-marella-royal-inn.onrender.com" // 🔥 YOUR FRONTEND DEPLOY URL (update later)
         ));
 
         // ✅ Allow all headers
