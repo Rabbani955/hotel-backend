@@ -22,10 +22,10 @@ public class AuthController {
     }
 
     // ✅ ADD HERE
-    @Value("${admin.username}")
+    @Value("${admin.username:Rabbani}")
     private String adminUser;
 
-    @Value("${admin.password}")
+    @Value("${admin.password:Rabbani123}")
     private String adminPass;
 
     @PostMapping("/login")
