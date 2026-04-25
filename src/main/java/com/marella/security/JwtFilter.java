@@ -30,10 +30,14 @@ public class JwtFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         // ✅ ONLY skip authentication APIs
-        if (path.startsWith("/api/auth")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (path.startsWith("/api/auth") ||
+        	    path.startsWith("/api/bookings") ||
+        	    path.startsWith("/api/rooms") ||
+        	    path.startsWith("/api/payment")) {
+
+        	    filterChain.doFilter(request, response);
+        	    return;
+        	}
 
         try {
             String authHeader = request.getHeader("Authorization");

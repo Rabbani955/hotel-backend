@@ -14,18 +14,7 @@ public class BookingService {
     // ✅ CREATE BOOKING (FINAL VERSION - MULTI ROOM SUPPORT)
     public Booking createBooking(Booking booking) {
 
-        // 🚨 1. Prevent overlapping booking (date-wise safety)
-        boolean isOverlapping = bookingRepository.existsOverlappingBooking(
-                booking.getRoomName(),
-                booking.getCheckIn(),
-                booking.getCheckOut()
-        );
-
-        if (isOverlapping) {
-            throw new RuntimeException("Room already booked for selected dates!");
-        }
-
-        // 🚨 2. ROOM LIMIT CHECK (5 rooms per type)
+        // 🚨 ROOM LIMIT CHECK (5 rooms per type)
         int bookedCount = bookingRepository.countByRoomNameAndStatusNot(
                 booking.getRoomName(),
                 "CHECKED_OUT"
@@ -35,7 +24,7 @@ public class BookingService {
             throw new RuntimeException("All rooms of this type are occupied ❌");
         }
 
-        // 🚨 3. PAYMENT LOGIC
+        // 🚨 PAYMENT LOGIC
         if ("Card".equalsIgnoreCase(booking.getPaymentMethod())) {
 
             if (booking.getPaymentId() == null) {
@@ -49,10 +38,10 @@ public class BookingService {
             booking.setPaymentStatus("PENDING");
         }
 
-        // 🚨 4. SET DEFAULT STATUS (VERY IMPORTANT)
+        // 🚨 DEFAULT STATUS
         booking.setStatus("CHECKED_IN");
 
-        // 🚨 5. SAVE BOOKING
+        // 🚨 SAVE BOOKING
         return bookingRepository.save(booking);
     }
 

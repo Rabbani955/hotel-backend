@@ -51,6 +51,21 @@ public class RoomController {
 
         return roomRepository.save(room);
     }
+    
+    @PutMapping("/admin/update-price/{id}")
+    public Room updatePrice(@PathVariable Long id,
+                            @RequestParam int price,
+                            HttpServletRequest request) {
+
+        validateAdmin(request);
+
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        room.setBasePrice(price);
+
+        return roomRepository.save(room);
+    }
 
     // ✅ JWT validation (common method)
     private void validateAdmin(HttpServletRequest request) {

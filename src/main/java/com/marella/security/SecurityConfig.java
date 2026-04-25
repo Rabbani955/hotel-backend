@@ -2,6 +2,7 @@ package com.marella.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,50 +24,81 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            // ✅ Enable CORS using our config
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // ❌ Disable CSRF (required for APIs)
             .csrf(csrf -> csrf.disable())
 
+            // ❌ No session (JWT based)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ FIXED HERE
+            // ❌ Disable default login
             .httpBasic(h -> h.disable())
             .formLogin(f -> f.disable())
 
+            // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
+
+                // 🔥 VERY IMPORTANT (Fix preflight issue)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Public APIs
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/bookings/**").permitAll()
+                .requestMatchers("/api/rooms/**").permitAll()
+                .requestMatchers("/api/payment/**").permitAll()
+
+                // Admin only
+                // ADMIN ONLY
                 .requestMatchers("/api/bookings/admin").hasRole("ADMIN")
-                .requestMatchers(
-                    "/api/bookings/**",
-                    "/api/rooms/**",
-                    "/api/payment/**"
-                ).permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/checkout/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").hasRole("ADMIN")
+
+                // Everything else secured
                 .anyRequest().authenticated()
             )
 
+            // ✅ JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ✅ CORS CONFIG (IMPORTANT FOR FRONTEND)
+    // =========================
+    // ✅ CORS CONFIG (FINAL FIX)
+    // =========================
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration config = new CorsConfiguration();
 
+        // 🔥 REQUIRED
         config.setAllowCredentials(true);
 
-        // 🔥 ADD YOUR FRONTEND URL HERE
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",   // local
-            "https://your-frontend-url.com" // deployed frontend (CHANGE THIS)
+        // 🔥 IMPORTANT: match EXACT frontend URL
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://*.onrender.com"   // for deployment
         ));
 
+        // ✅ Allow all headers
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // ✅ Allow all methods
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
+        // 🔥 IMPORTANT (for JWT Authorization header)
+        config.setExposedHeaders(List.of("Authorization"));
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
