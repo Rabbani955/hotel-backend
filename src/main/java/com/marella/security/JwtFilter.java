@@ -29,31 +29,24 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // ✅ ONLY skip authentication APIs
-        if (path.startsWith("/api/auth") ||
-        	    path.startsWith("/api/bookings") ||
-        	    path.startsWith("/api/rooms") ||
-        	    path.startsWith("/api/payment")) {
-
-        	    filterChain.doFilter(request, response);
-        	    return;
-        	}
+        // ✅ ONLY skip login API
+        if (path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             String authHeader = request.getHeader("Authorization");
 
-            // ✅ Check if Authorization header exists
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
                 String token = authHeader.substring(7);
 
-                // ✅ Validate token
                 if (jwtUtil.isTokenValid(token)) {
 
                     String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
 
-                    // ✅ Set authentication with ROLE_
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
                                     username,
@@ -65,7 +58,6 @@ public class JwtFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                     );
 
-                    // ✅ Store in Security Context
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
@@ -74,7 +66,6 @@ public class JwtFilter extends OncePerRequestFilter {
             System.out.println("JWT Error: " + e.getMessage());
         }
 
-        // ✅ Continue filter chain
         filterChain.doFilter(request, response);
     }
 }
