@@ -53,6 +53,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/bookings/occupied-rooms").permitAll()
 
+                // 🔥🔥🔥 FIX (PAYMENT API)
+                .requestMatchers("/api/payment/**").permitAll()
+
                 // ======================
                 // 🔒 ADMIN APIs
                 // ======================
@@ -87,8 +90,8 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "https://hotel-marella-royal-inn.onrender.com",
-            "https://*.onrender.com" ,  // 🔥 IMPORTANT for flexibility
-            "https://*.vercel.app"   // ✅ ADD THIS LINE
+            "https://*.onrender.com",
+            "https://*.vercel.app"
         ));
 
         config.setAllowedHeaders(List.of("*"));
