@@ -86,6 +86,8 @@ public class Booking {
     // ✅ Booking Status
     @Column(nullable = false)
     private String status; // CHECKED_IN, CHECKED_OUT
+    
+    private int roomsCount = 1;
 
 
     // ------------------ GETTERS & SETTERS ------------------
@@ -211,4 +213,14 @@ public class Booking {
     public void setStatus(String status) {
         this.status = status;
     }
+    
+    public int getRoomsCount() {
+        return roomsCount;
+    }
+    
+    public void setRoomsCount(int roomsCount) {
+        this.roomsCount = roomsCount;
+    }
+    
+    
 }

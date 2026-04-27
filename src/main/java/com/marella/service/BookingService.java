@@ -11,41 +11,58 @@ public class BookingService {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // ✅ CREATE BOOKING (FINAL VERSION - MULTI ROOM SUPPORT)
     public Booking createBooking(Booking booking) {
 
-        // 🚨 ROOM LIMIT CHECK (5 rooms per type)
-        int bookedCount = bookingRepository.countByRoomNameAndStatusNot(
+        int requestedRooms = Math.max(1, booking.getRoomsCount());
+
+        // 🔥 DATE-WISE ROOM AVAILABILITY
+        int overlappingRooms = bookingRepository.countOverlappingRooms(
                 booking.getRoomName(),
-                "CHECKED_OUT"
+                booking.getCheckIn(),
+                booking.getCheckOut()
         );
 
-        if (bookedCount >= 5) {
-            throw new RuntimeException("All rooms of this type are occupied ❌");
+        if (overlappingRooms + requestedRooms > 5) {
+
+            int available = 5 - overlappingRooms;
+
+            if (available <= 0) {
+                throw new RuntimeException("No rooms available for selected dates ❌");
+            } else {
+                throw new RuntimeException("Only " + available + " rooms available for selected dates ❌");
+            }
         }
 
-        // 🚨 PAYMENT LOGIC
+        // 🔥 USER LIMIT (DATE-WISE)
+        int userRooms = bookingRepository.countUserBookedRoomsForDates(
+                booking.getEmail(),
+                booking.getCheckIn(),
+                booking.getCheckOut()
+        );
+
+        if (userRooms + requestedRooms > 5) {
+            throw new RuntimeException("You can book maximum 5 rooms for selected dates ❌");
+        }
+
+        // 💳 PAYMENT LOGIC
         if ("Card".equalsIgnoreCase(booking.getPaymentMethod())) {
 
             if (booking.getPaymentId() == null) {
-                throw new RuntimeException("Payment not completed. Please try again.");
+                throw new RuntimeException("Payment not completed ❌");
             }
 
             booking.setPaymentStatus("SUCCESS");
 
         } else {
-            // Pay at hotel
             booking.setPaymentStatus("PENDING");
         }
 
-        // 🚨 DEFAULT STATUS
         booking.setStatus("CHECKED_IN");
 
-        // 🚨 SAVE BOOKING
         return bookingRepository.save(booking);
     }
 
-    // ✅ CHECKOUT (FREE ROOM)
+    // ✅ CHECKOUT
     public Booking checkout(Long id) {
 
         Booking booking = bookingRepository.findById(id)

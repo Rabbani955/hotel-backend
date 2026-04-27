@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.*;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -23,28 +23,27 @@ public class BookingController {
     private final JwtUtil jwtUtil;
 
     public BookingController(BookingService bookingService,
-            BookingRepository bookingRepository,
-            JwtUtil jwtUtil) {
-this.bookingService = bookingService;
-this.bookingRepository = bookingRepository;
-this.jwtUtil = jwtUtil;
-}
+                             BookingRepository bookingRepository,
+                             JwtUtil jwtUtil) {
+        this.bookingService = bookingService;
+        this.bookingRepository = bookingRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
-    // ✅ CREATE BOOKING (FIXED)
+    // ✅ CREATE BOOKING
     @PostMapping
     public Booking createBooking(@RequestBody Booking booking) {
 
         if (booking.getCheckIn() == null || booking.getCheckOut() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-in and Check-out required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Check-in & Check-out required");
         }
 
         if (booking.getCheckOut().isBefore(booking.getCheckIn())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date range");
         }
-        
-        // ✅ ADD THIS BLOCK
+
         if (booking.getPaymentMethod() == null || booking.getPaymentMethod().isEmpty()) {
-            booking.setPaymentMethod("Pay at Hotel"); // default
+            booking.setPaymentMethod("Pay at Hotel");
         }
 
         try {
@@ -54,15 +53,14 @@ this.jwtUtil = jwtUtil;
         }
     }
 
-    // ✅ ADMIN: GET ALL BOOKINGS
+    // ✅ ADMIN BOOKINGS
     @GetMapping("/admin")
     public List<Booking> getAllBookings(HttpServletRequest request) {
-
         validateAdmin(request);
         return bookingRepository.findAll();
     }
 
-    // ✅ ADMIN: DELETE BOOKING
+    // ✅ DELETE
     @DeleteMapping("/{id}")
     public void deleteBooking(@PathVariable Long id, HttpServletRequest request) {
 
@@ -75,27 +73,30 @@ this.jwtUtil = jwtUtil;
         bookingRepository.deleteById(id);
     }
 
-    // ✅ CHECKOUT API (VERY IMPORTANT)
+    // ✅ CHECKOUT
     @PutMapping("/checkout/{id}")
     public Booking checkout(@PathVariable Long id, HttpServletRequest request) {
-
-        validateAdmin(request); // 🔒 protect API
-
+        validateAdmin(request);
         return bookingService.checkout(id);
     }
-    
+
+    // ✅ OCCUPIED ROOMS (for frontend)
     @GetMapping("/occupied-rooms")
-    public List<String> getOccupiedRooms() {
+    public List<Map<String, Object>> getOccupiedRooms() {
+
         return bookingRepository.findAll()
                 .stream()
                 .filter(b -> !"CHECKED_OUT".equals(b.getStatus()))
-                .map(Booking::getRoomName)
+                .map(b -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("roomName", b.getRoomName());
+                    map.put("roomsCount", b.getRoomsCount());
+                    return map;
+                })
                 .toList();
     }
-    
-    
 
-    // ✅ JWT validation
+    // 🔐 ADMIN AUTH
     private void validateAdmin(HttpServletRequest request) {
 
         String authHeader = request.getHeader("Authorization");

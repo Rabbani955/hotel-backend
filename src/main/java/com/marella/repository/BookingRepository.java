@@ -6,24 +6,50 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    // ✅ Check overlapping bookings
+    // ✅ Get active bookings for a room type
+    List<Booking> findByRoomNameAndStatusNot(String roomName, String status);
+
+    // ✅ Count overlapping rooms (DATE-WISE LOGIC 🔥)
     @Query("""
-        SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END
+        SELECT COALESCE(SUM(
+            CASE 
+                WHEN b.roomsCount IS NULL OR b.roomsCount = 0 THEN 1 
+                ELSE b.roomsCount 
+            END
+        ), 0)
         FROM Booking b
         WHERE b.roomName = :roomName
         AND b.status = 'CHECKED_IN'
         AND b.checkIn <= :checkOut
         AND b.checkOut >= :checkIn
     """)
-    boolean existsOverlappingBooking(
-            @Param("roomName") String roomName,
-            @Param("checkIn") LocalDate checkIn,
-            @Param("checkOut") LocalDate checkOut
+    int countOverlappingRooms(
+        @Param("roomName") String roomName,
+        @Param("checkIn") LocalDate checkIn,
+        @Param("checkOut") LocalDate checkOut
     );
 
-    // ✅ Count active bookings (for 5-room logic)
-    int countByRoomNameAndStatusNot(String roomName, String status);
+    // ✅ User limit (DATE-WISE 🔥)
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE 
+                WHEN b.roomsCount IS NULL OR b.roomsCount = 0 THEN 1 
+                ELSE b.roomsCount 
+            END
+        ), 0)
+        FROM Booking b
+        WHERE b.email = :email
+        AND b.status = 'CHECKED_IN'
+        AND b.checkIn <= :checkOut
+        AND b.checkOut >= :checkIn
+    """)
+    int countUserBookedRoomsForDates(
+        @Param("email") String email,
+        @Param("checkIn") LocalDate checkIn,
+        @Param("checkOut") LocalDate checkOut
+    );
 }
