@@ -29,7 +29,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // ✅ ONLY skip login API
+        // ✅ Skip auth APIs
         if (path.startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -47,11 +47,16 @@ public class JwtFilter extends OncePerRequestFilter {
                     String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
 
+                    // ✅ FIX: Prevent ROLE duplication
+                    String finalRole = (role != null && role.startsWith("ROLE_"))
+                            ? role
+                            : "ROLE_" + role;
+
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
                                     username,
                                     null,
-                                    Collections.singleton(() -> "ROLE_" + role)
+                                    Collections.singleton(() -> finalRole)
                             );
 
                     auth.setDetails(

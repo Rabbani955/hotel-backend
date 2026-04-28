@@ -42,7 +42,7 @@ public class SecurityConfig {
             // ✅ Authorization
             .authorizeHttpRequests(auth -> auth
 
-                // 🔥 VERY IMPORTANT (Preflight)
+                // 🔥 Allow preflight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // ======================
@@ -52,8 +52,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/bookings/occupied-rooms").permitAll()
-
-                // 🔥🔥🔥 FIX (PAYMENT API)
                 .requestMatchers("/api/payment/**").permitAll()
 
                 // ======================
@@ -70,7 +68,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // ✅ JWT FILTER
+            // ✅ JWT Filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
