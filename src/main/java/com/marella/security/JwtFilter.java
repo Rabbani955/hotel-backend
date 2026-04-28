@@ -47,7 +47,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
 
-                    // ✅ FIX: Prevent ROLE duplication
+                    // ✅ FIX: PreCvent ROLE duplication
                     String finalRole = (role != null && role.startsWith("ROLE_"))
                             ? role
                             : "ROLE_" + role;
