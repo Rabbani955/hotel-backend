@@ -1,4 +1,4 @@
-package com.marella.model;--
+package com.marella.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -221,6 +221,5 @@ public class Booking {
     public void setRoomsCount(int roomsCount) {
         this.roomsCount = roomsCount;
     }
-    
     
 }
