@@ -26,7 +26,7 @@ public class RoomController {
     // ✅ Guest API
     @GetMapping
     public List<Room> getRooms() {
-        return roomRepository.findBySoldOutFalse();
+    	return roomRepository.findAll();
     }
 
     // ✅ Admin: Get all rooms
