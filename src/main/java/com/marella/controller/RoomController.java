@@ -1,6 +1,9 @@
 package com.marella.controller;
 
 import com.marella.model.Room;
+import com.marella.model.RoomAvailability;
+import com.marella.repository.BookingRepository;
+import com.marella.repository.RoomAvailabilityRepository;
 import com.marella.repository.RoomRepository;
 import com.marella.security.JwtUtil;
 
@@ -8,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
@@ -16,31 +20,95 @@ import java.util.List;
 public class RoomController {
 
     private final RoomRepository roomRepository;
+    private final RoomAvailabilityRepository roomAvailabilityRepository;
+    private final BookingRepository bookingRepository;
     private final JwtUtil jwtUtil;
 
-    public RoomController(RoomRepository roomRepository, JwtUtil jwtUtil) {
+    public RoomController(
+            RoomRepository roomRepository,
+            RoomAvailabilityRepository roomAvailabilityRepository,
+            BookingRepository bookingRepository,
+            JwtUtil jwtUtil) {
+
         this.roomRepository = roomRepository;
+        this.roomAvailabilityRepository = roomAvailabilityRepository;
+        this.bookingRepository = bookingRepository;
         this.jwtUtil = jwtUtil;
     }
 
-    // ✅ Guest API
+    // ==================================================
+    // GUEST APIs
+    // ==================================================
+
     @GetMapping
     public List<Room> getRooms() {
-    	return roomRepository.findAll();
-    }
-
-    // ✅ Admin: Get all rooms
-    @GetMapping("/admin")
-    public List<Room> getAllRoomsForAdmin(HttpServletRequest request) {
-        validateAdmin(request);
         return roomRepository.findAll();
     }
 
-    // ✅ Admin: Update sold out status
+    // ==================================================
+    // DATE-WISE AVAILABLE ROOMS
+    // ==================================================
+
+    @GetMapping("/available")
+    public List<Room> getAvailableRooms(
+            @RequestParam String checkIn,
+            @RequestParam String checkOut) {
+
+        LocalDate in = LocalDate.parse(checkIn);
+        LocalDate out = LocalDate.parse(checkOut);
+
+        List<Room> rooms = roomRepository.findAll();
+
+        return rooms.stream()
+                .filter(room -> {
+
+                    // Global sold out
+                    if (room.isSoldOut()) {
+                        return false;
+                    }
+
+                    // Date-wise sold out by admin
+                    boolean blocked =
+                            !roomAvailabilityRepository.findBlockedDates(
+                                    room.getId(),
+                                    in,
+                                    out
+                            ).isEmpty();
+
+                    if (blocked) {
+                        return false;
+                    }
+
+                    // Already booked rooms for those dates
+                    int bookedRooms =
+                            bookingRepository.countOverlappingRooms(
+                                    room.getName(),
+                                    in,
+                                    out
+                            );
+
+                    return bookedRooms < 5;
+                })
+                .toList();
+    }
+
+    // ==================================================
+    // ADMIN APIs
+    // ==================================================
+
+    @GetMapping("/admin")
+    public List<Room> getAllRoomsForAdmin(HttpServletRequest request) {
+
+        validateAdmin(request);
+
+        return roomRepository.findAll();
+    }
+
     @PutMapping("/admin/soldout/{id}")
-    public Room markSoldOut(@PathVariable Long id,
-                            @RequestParam boolean status,
-                            HttpServletRequest request) {
+    public Room markSoldOut(
+            @PathVariable Long id,
+            @RequestParam boolean status,
+            HttpServletRequest request) {
 
         validateAdmin(request);
 
@@ -51,11 +119,12 @@ public class RoomController {
 
         return roomRepository.save(room);
     }
-    
+
     @PutMapping("/admin/update-price/{id}")
-    public Room updatePrice(@PathVariable Long id,
-                            @RequestParam int price,
-                            HttpServletRequest request) {
+    public Room updatePrice(
+            @PathVariable Long id,
+            @RequestParam int price,
+            HttpServletRequest request) {
 
         validateAdmin(request);
 
@@ -67,7 +136,24 @@ public class RoomController {
         return roomRepository.save(room);
     }
 
-    // ✅ JWT validation (common method)
+    // ==================================================
+    // DATE-WISE SOLD OUT
+    // ==================================================
+
+    @PostMapping("/admin/date-soldout")
+    public RoomAvailability markDateSoldOut(
+            @RequestBody RoomAvailability request,
+            HttpServletRequest requestHttp) {
+
+        validateAdmin(requestHttp);
+
+        return roomAvailabilityRepository.save(request);
+    }
+
+    // ==================================================
+    // JWT VALIDATION
+    // ==================================================
+
     private void validateAdmin(HttpServletRequest request) {
 
         String authHeader = request.getHeader("Authorization");
