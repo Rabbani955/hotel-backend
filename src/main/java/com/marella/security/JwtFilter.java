@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -44,14 +45,23 @@ public class JwtFilter extends OncePerRequestFilter {
                     System.out.println("ROLE FROM TOKEN: " + role);
 
                     // ✅ HARD FIX
-                    String finalRole = "ROLE_ADMIN"; // FORCE ADMIN
+                    /*String finalRole = "ROLE_ADMIN"; // FORCE ADMIN
 
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
                                     username,
                                     null,
                                     Collections.singleton(() -> finalRole)
-                            );
+                            );*/
+                    
+                    
+
+                    UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                        );
 
                     auth.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
