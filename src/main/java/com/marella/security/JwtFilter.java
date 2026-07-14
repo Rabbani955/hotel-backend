@@ -29,14 +29,27 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+    	String uri = request.getRequestURI();
+    	String authHeader = request.getHeader("Authorization");
 
-        try {
+    	// Skip JWT validation for public APIs
+    	if (
+    	        uri.equals("/api/bookings") ||
+    	        uri.startsWith("/api/payment") ||
+    	        uri.startsWith("/api/auth") ||
+    	        uri.startsWith("/api/rooms") ||
+    	        uri.equals("/api/bookings/occupied-rooms")
+    	) {
+    	    filterChain.doFilter(request, response);
+    	    return;
+    	}
 
-            System.out.println("=================================");
-            System.out.println("REQUEST URI: " + request.getRequestURI());
-            System.out.println("AUTH HEADER: " + authHeader);
-            System.out.println("=================================");
+    	try {
+
+    	    System.out.println("=================================");
+    	    System.out.println("REQUEST URI: " + uri);
+    	    System.out.println("AUTH HEADER: " + authHeader);
+    	    System.out.println("=================================");
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
