@@ -53,10 +53,15 @@ public class BookingController {
         }
     }
 
-    // ✅ ADMIN BOOKINGS
+    /*✅ ADMIN BOOKINGS
     @GetMapping("/admin")
     public List<Booking> getAllBookings(HttpServletRequest request) {
         validateAdmin(request);
+        return bookingRepository.findAll();
+    }*/
+    
+    @GetMapping("/admin")
+    public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
     }
 
