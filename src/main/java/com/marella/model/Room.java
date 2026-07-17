@@ -57,7 +57,7 @@ public class Room {
     }
 
     public void setBasePrice(int basePrice) {
-        this.basePrice = basePrice;
+ .basePrice = basePrice;
     }
 
     public int getExtraGuestPrice() {
