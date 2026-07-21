@@ -29,10 +29,14 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
     	
-    	System.out.println("METHOD: " + request.getMethod());
-
-    	System.out.println("URI: " + request.getRequestURI());   
-
+    	// ===== DEBUG LOGS =====
+        System.out.println("--------------------------------");
+        System.out.println("METHOD : " + request.getMethod());
+        System.out.println("URI    : " + request.getRequestURI());
+        System.out.println("URL    : " + request.getRequestURL());
+        System.out.println("QUERY  : " + request.getQueryString());
+        System.out.println("--------------------------------");
+        
     	String uri = request.getRequestURI();
     	String authHeader = request.getHeader("Authorization");
 
