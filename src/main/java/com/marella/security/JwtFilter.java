@@ -46,10 +46,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
     	try {
 
-    	    System.out.println("=================================");
-    	    System.out.println("REQUEST URI: " + uri);
-    	    System.out.println("AUTH HEADER: " + authHeader);
-    	    System.out.println("=================================");
+    	    //System.out.println("=================================");
+    	    //System.out.println("REQUEST URI: " + uri);
+    	    //System.out.println("AUTH HEADER: " + authHeader);
+    	    //System.out.println("=================================");
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
@@ -60,9 +60,9 @@ public class JwtFilter extends OncePerRequestFilter {
                     String username = jwtUtil.extractUsername(token);
                     String role = jwtUtil.extractRole(token);
 
-                    System.out.println("TOKEN VALID ✅");
-                    System.out.println("USERNAME: " + username);
-                    System.out.println("ROLE FROM TOKEN: " + role);
+                    //System.out.println("TOKEN VALID ✅");
+                    //System.out.println("USERNAME: " + username);
+                   // System.out.println("ROLE FROM TOKEN: " + role);
 
                     // Convert role to Spring Security format
                     String finalRole = role;
@@ -75,7 +75,7 @@ public class JwtFilter extends OncePerRequestFilter {
                         finalRole = "ROLE_" + finalRole.toUpperCase();
                     }
 
-                    System.out.println("FINAL ROLE: " + finalRole);
+                   // System.out.println("FINAL ROLE: " + finalRole);
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -92,12 +92,12 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
 
-                    System.out.println("AUTHENTICATION SET SUCCESSFULLY ✅");
+                   // System.out.println("AUTHENTICATION SET SUCCESSFULLY ✅");
                 } else {
                     System.out.println("TOKEN INVALID ❌");
                 }
             } else {
-                System.out.println("NO JWT TOKEN FOUND ❌");
+               // System.out.println("NO JWT TOKEN FOUND ❌");
             }
 
         } catch (Exception e) {
